@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracing Cards</title>
+    <style>
+        :root {
+            --primary-bg: #fffcf2;
+            --instruction-bg: #fef3c7;
+            --text-dark: #1f2937;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+            background-color: var(--primary-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+
+        .header {
+            text-align: center;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #d97706;
+            margin-bottom: 10px;
+        }
+
+        .instruction-box {
+            background-color: var(--instruction-bg);
+            border: 2px dashed #f59e0b;
+            padding: 15px 25px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        #canvas-container {
+            position: relative;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            line-height: 0;
+            touch-action: none; 
+            border: 8px solid white;
+        }
+
+        canvas {
+            border-radius: 8px;
+            cursor: crosshair;
+        }
+
+        .image-selector {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* Specific Theme Button Colors */
+        .btn-card {
+            padding: 12px 25px;
+            font-size: 1rem;
+            border: 2px solid #ccc;
+            background: white;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+
+        .theme-snake:hover { border-color: #22c55e; background: #f0fdf4; color: #166534; }
+        .theme-garden:hover { border-color: #eab308; background: #fefce8; color: #854d0e; }
+        .theme-ocean:hover { border-color: #3b82f6; background: #eff6ff; color: #1e40af; }
+        .theme-snail:hover { border-color: #f472b6; background: #fdf2f8; color: #9d174d; }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-clear { background-color: #f87171; color: white; border: none; padding: 12px 25px; border-radius: 50px; cursor: pointer; font-weight: bold; }
+        .btn-save { background-color: #3b82f6; color: white; border: none; padding: 12px 25px; border-radius: 50px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Tracing Cards</h1>
+        <div class="instruction-box">
+            <strong>Instructions:</strong> Trace all lines neatly, complete the card, take a clear photo, save the image, and upload it to the class file.
+        </div>
+    </div>
+
+    <div class="image-selector">
+        <button class="btn-card theme-snake" onclick="loadTemplate('image1.jpg')">Wiggly Snakes</button>
+        <button class="btn-card theme-garden" onclick="loadTemplate('image2.jpg')">Insects in the Garden</button>
+        <button class="btn-card theme-ocean" onclick="loadTemplate('image3.jpg')">Friends from the Deep</button>
+        <button class="btn-card theme-snail" onclick="loadTemplate('image4.jpg')">The Busy Snail</button>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="practiceCanvas"></canvas>
+    </div>
+
+    <div class="controls">
+        <button class="btn-clear" onclick="clearCanvas()">Clear Card</button>
+        <button class="btn-save" onclick="saveCanvas()">Save Image</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('practiceCanvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+        let currentTemplate = new Image();
+
+        function initCanvas() {
+            const width = Math.min(window.innerWidth - 60, 800);
+            const height = width * 0.7; 
+            canvas.width = width;
+            canvas.height = height;
+            loadTemplate('image1.jpg'); 
+        }
+
+        function loadTemplate(src) {
+            currentTemplate.src = src;
+            currentTemplate.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(currentTemplate, 0, 0, canvas.width, canvas.height);
+            };
+        }
+
+        function startDrawing(e) {
+            drawing = true;
+            draw(e);
+        }
+
+        function stopDrawing() {
+            drawing = false;
+            ctx.beginPath();
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#2563eb'; 
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
+        
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function clearCanvas() {
+            loadTemplate(currentTemplate.src);
+        }
+
+        function saveCanvas() {
+            const link = document.createElement('a');
+            const date = new Date().toLocaleDateString().replace(/\//g, '-');
+            link.download = `tracing-card-${date}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        window.onload = initCanvas;
+    </script>
+</body>
+</html>
